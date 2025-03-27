@@ -64,7 +64,7 @@
             </table>
           </div>
 
-          <router-link class="btn btn-success float-right" :to="`/PesananSukses`">
+          <router-link class="btn btn-success float-right" :to="`/pesanan-sukses`">
             <b-icon-cart class="mr-2"></b-icon-cart>Tambahkan
           </router-link>
         </div>
@@ -72,18 +72,17 @@
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref } from "vue";
+import { computed } from "vue";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import NavbarView from "@/components/Navbar.vue";
 import axios from "@/axios.js";
 
-// Query Client untuk caching
+
 const queryClient = useQueryClient();
 
-// Fetch Inventaris
-const { data: inventarisList, isLoading, error } = useQuery({
+
+const { data, isLoading, error } = useQuery({
   queryKey: ["inventaris"],
   queryFn: async () => {
     const response = await axios.get("http://127.0.0.1:8000/api/inventaris");
@@ -91,17 +90,19 @@ const { data: inventarisList, isLoading, error } = useQuery({
   },
 });
 
-// Hapus Inventaris
+const inventarisList = computed(() => data.value ?? []);
+
 const { mutate: hapusInventaris } = useMutation({
   mutationFn: async (id) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus item ini?")) return;
     await axios.delete(`http://127.0.0.1:8000/api/inventaris/${id}`);
   },
   onSuccess: () => {
-    queryClient.invalidateQueries(["inventaris"]);
+    queryClient.invalidateQueries(["inventaris"]); 
   },
+  onSettled: async () => {
+    await queryClient.refetchQueries(["inventaris"]); 
+  }
 });
-</script>
 
-<style scoped>
-/* Tambahkan gaya jika diperlukan */
-</style>
+</script>

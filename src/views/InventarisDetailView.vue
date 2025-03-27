@@ -47,9 +47,7 @@
                 <label for="quantity">Jumlah Barang</label>
                 <input type="number" id="quantity" class="form-control" v-model="stok.jumlah_barang" />
               </div>
-              <button type="submit" class="btn btn-success">
-                <b-icon-check-all class="mr-2"></b-icon-check-all> Update Stok
-              </button>
+              <button type="submit" class="btn btn-success"><b-icon-check-all class="mr-2"></b-icon-check-all> Update Stok</button>
             </form>
           </div>
         </div>
@@ -76,7 +74,7 @@ const queryClient = useQueryClient();
 const stok = ref({ jumlah_barang: null });
 
 // Fetch inventory details
-const { data: inventaris, error } = useQuery({
+const { data: inventaris } = useQuery({
   queryKey: ["inventaris", route.params.id],
   queryFn: async () => {
     const response = await axios.get(`http://127.0.0.1:8000/api/inventaris/${route.params.id}`);
@@ -85,23 +83,23 @@ const { data: inventaris, error } = useQuery({
 });
 
 // Mutation for updating inventory
-const { mutate: updateInventaris } = useMutation({
+const { mutate: updateInventaris, isPending, isError, error } = useMutation({
   mutationFn: async () => {
     if (!stok.value.jumlah_barang) {
       throw new Error("Jumlah Barang Harus Diisi");
     }
-    await axios.post(`http://127.0.0.1:8000/api/inventaris`, {
-      ...inventaris.value,
-      quantity: stok.value.jumlah_barang,
-    });
+    return axios.put(`http://127.0.0.1:8000/api/inventaris/${route.params.id}`, {
+  jumlah: stok.value.jumlah_barang, // Ubah quantity menjadi jumlah sesuai dengan validasi Laravel
+});
   },
   onSuccess: () => {
-    queryClient.invalidateQueries(["inventaris"]);
-    router.push("/inventaris");
+    queryClient.invalidateQueries(["inventaris"]); // Auto-refresh daftar inventaris
+    router.push("/inventaris"); // Redirect setelah sukses
     alert("Inventaris Berhasil Diperbarui!");
   },
   onError: (err) => {
     alert(`Error: ${err.message}`);
   },
 });
+
 </script>
